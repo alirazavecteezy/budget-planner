@@ -1,24 +1,40 @@
 {
   "name": "Budget Planner PKR",
-  "short_name": "Budget",
-  "description": "Personal PKR Budget Planner - Amdani aur Kharche ka hisaab",
+  "short_name": "Budget PKR",
+  "description": "Personal PKR Budget Planner - Amdani aur Kharche ka hisaab rakhen",
   "start_url": "./budget-planner-pkr.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0f0f1a",
   "theme_color": "#00c896",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "lang": "ur",
+  "categories": ["finance", "productivity"],
+  "screenshots": [],
   "icons": [
     {
       "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
