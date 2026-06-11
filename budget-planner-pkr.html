@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Budget">
+<meta name="theme-color" content="#00c896">
+<meta name="description" content="Personal PKR Budget Planner">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Budget Planner — PKR</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#00c896;--red:#ff5c5c;--blue:#4e9eff;--yellow:#ffd166;--purple:#a78bfa;
+  --bg:#0f0f1a;--bg2:#1a1a2e;--bg3:#22223b;--border:rgba(255,255,255,0.08);
+  --text:#f0f0f0;--text2:#8888aa;--radius:16px;--radius-sm:10px;
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:120px}
+
+/* HEADER */
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;position:sticky;top:0;z-index:200}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--green),#00a878);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.month-nav{display:flex;align-items:center;justify-content:center;background:var(--bg3);border:1px solid var(--border);border-radius:24px;overflow:hidden}
+.mnav-btn{background:transparent;border:none;color:var(--text2);font-size:18px;font-weight:800;cursor:pointer;padding:7px 16px;line-height:1;font-family:'Nunito',sans-serif}
+.mnav-btn:active{background:rgba(255,255,255,0.08);color:var(--text)}
+.mnav-btn.disabled{opacity:0.25;pointer-events:none}
+.month-label{font-size:13px;font-weight:700;color:var(--text);padding:0 4px;min-width:115px;text-align:center}
+.current-dot{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-left:5px;vertical-align:middle}
+.past-badge{font-size:11px;background:rgba(255,209,102,0.15);color:var(--yellow);border:1px solid rgba(255,209,102,0.3);border-radius:20px;padding:3px 10px;font-weight:700}
+
+/* TABS */
+.tabs{display:flex;gap:0;background:var(--bg3);border:1px solid var(--border);border-radius:24px;padding:3px;margin:14px 16px 0}
+.tab{flex:1;padding:8px 0;border-radius:20px;border:none;background:transparent;color:var(--text2);font-size:13px;font-weight:700;font-family:'Nunito',sans-serif;cursor:pointer;transition:all 0.2s}
+.tab.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.4)}
+
+/* CONTAINER */
+.container{padding:16px;max-width:480px;margin:0 auto}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* CARDS */
+.summary-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.card-label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px}
+.card-value{font-size:20px;font-weight:800;color:var(--text)}
+.card-value.green{color:var(--green)}.card-value.red{color:var(--red)}
+.savings-card{background:linear-gradient(135deg,rgba(0,200,150,0.15),rgba(0,200,150,0.05));border-color:rgba(0,200,150,0.3)}
+.savings-card.deficit{background:linear-gradient(135deg,rgba(255,92,92,0.15),rgba(255,92,92,0.05));border-color:rgba(255,92,92,0.3)}
+.savings-pct{font-size:12px;color:var(--text2);margin-top:3px;font-weight:600}
+.progress-wrap{background:var(--bg3);border-radius:6px;height:7px;overflow:hidden;margin-top:8px}
+.progress-bar{height:100%;border-radius:6px;background:var(--green);transition:width 0.4s ease}
+.progress-bar.over{background:var(--red)}
+
+/* SECTION */
+.section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+.section-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.section-title{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em}
+.section-total{font-size:14px;font-weight:700;color:var(--text)}
+
+/* INCOME INPUTS */
+.input-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border)}
+.input-row:last-child{border-bottom:none}
+.input-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.input-icon.green-bg{background:rgba(0,200,150,0.15)}.input-icon.yellow-bg{background:rgba(255,209,102,0.15)}
+.input-info{flex:1;min-width:0}
+.input-name{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:3px}
+.rupee-input{display:flex;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden}
+.rupee-input:focus-within{border-color:rgba(0,200,150,0.5)}
+.rupee-sym{padding:7px 6px 7px 11px;font-size:14px;font-weight:700;color:var(--text2);flex-shrink:0}
+.rupee-input input{flex:1;background:transparent;border:none;outline:none;font-size:15px;font-weight:700;color:var(--text);font-family:'Nunito',sans-serif;padding:7px 10px 7px 2px;min-width:0}
+.rupee-input input::placeholder{color:var(--text2);font-weight:500}
+
+/* EXPENSE LIST */
+.add-btn{padding:13px;background:rgba(0,200,150,0.12);border:1.5px solid rgba(0,200,150,0.35);border-radius:var(--radius-sm);color:var(--green);font-size:15px;font-weight:700;font-family:'Nunito',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 14px;width:calc(100% - 28px)}
+.add-btn:active{background:rgba(0,200,150,0.22)}
+
+.exp-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border)}
+.exp-row:last-child{border-bottom:none}
+.exp-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(255,255,255,0.06)}
+.exp-info{flex:1;min-width:0}
+.exp-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.exp-meta{font-size:11px;color:var(--text2);margin-top:2px;font-weight:600}
+.exp-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.exp-amount{font-size:15px;font-weight:800;color:var(--red)}
+.exp-bal{font-size:11px;font-weight:700;text-align:right;margin-top:2px}
+.exp-del{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--text2);font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.exp-del:active{background:rgba(255,92,92,0.2);color:var(--red)}
+
+/* RUNNING BALANCE ROW */
+.bal-row{display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border)}
+.bal-label{font-size:11px;color:var(--text2);font-weight:600}
+.bal-val{font-size:13px;font-weight:800}
+
+/* MONTH END SUMMARY */
+.month-summary{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+.ms-head{padding:14px 16px;background:linear-gradient(135deg,rgba(0,200,150,0.1),transparent);border-bottom:1px solid var(--border);font-size:14px;font-weight:800;color:var(--green)}
+.ms-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700}
+.ms-row:last-child{border-bottom:none}
+.ms-row.total{background:rgba(255,255,255,0.03);font-size:15px}
+.ms-label{color:var(--text2)}
+.ms-val{font-weight:800}
+.ms-val.green{color:var(--green)}.ms-val.red{color:var(--red)}
+
+/* BREAKDOWN */
+.breakdown-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border)}
+.breakdown-row:last-child{border-bottom:none}
+.bk-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.bk-label{flex:1;font-size:13px;font-weight:600;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bk-bar-wrap{width:55px}
+.bk-bar-bg{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.bk-bar-fill{height:100%;border-radius:3px}
+.bk-val{font-size:13px;font-weight:700;color:var(--text);min-width:78px;text-align:right}
+.bk-pct{font-size:11px;color:var(--text2);min-width:30px;text-align:right;font-weight:600}
+
+.tip{background:rgba(78,158,255,0.1);border:1px solid rgba(78,158,255,0.2);border-radius:var(--radius-sm);padding:11px 13px;font-size:13px;color:var(--blue);font-weight:600;margin-bottom:14px;display:flex;align-items:flex-start;gap:7px}
+.empty-msg{padding:24px 16px;text-align:center;color:var(--text2);font-size:13px;font-weight:600}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:0 0 36px;transform:translateY(60px);transition:transform 0.3s cubic-bezier(.4,0,.2,1)}
+.overlay.open .modal{transform:translateY(0)}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0}
+.modal-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:800;color:var(--text)}
+.modal-close{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:18px 20px 0}
+.field-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px}
+.field-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);outline:none;font-family:'Nunito',sans-serif;font-size:16px;font-weight:700;color:var(--text);padding:12px 14px;margin-bottom:14px}
+.field-input:focus{border-color:rgba(0,200,150,0.5)}
+.field-input::placeholder{color:var(--text2);font-weight:500}
+.amount-wrap{display:flex;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:14px;overflow:hidden}
+.amount-wrap:focus-within{border-color:rgba(0,200,150,0.5)}
+.amount-sym{padding:12px 8px 12px 14px;font-size:18px;font-weight:800;color:var(--text2)}
+.amount-wrap input{flex:1;background:transparent;border:none;outline:none;font-size:22px;font-weight:800;color:var(--text);font-family:'Nunito',sans-serif;padding:12px 14px 12px 0;min-width:0}
+.amount-wrap input::placeholder{color:rgba(136,136,170,0.4);font-weight:600}
+.date-info-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.date-info-text{font-size:13px;font-weight:700;color:var(--text)}
+.date-info-sub{font-size:11px;color:var(--text2);font-weight:600;margin-top:1px}
+.icon-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:18px}
+.icon-opt{width:100%;aspect-ratio:1;border-radius:10px;background:var(--bg3);border:1.5px solid transparent;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s}
+.icon-opt.selected{border-color:var(--green);background:rgba(0,200,150,0.15)}
+.icon-opt:active{transform:scale(0.92)}
+.save-btn{width:100%;padding:15px;background:var(--green);border:none;border-radius:var(--radius-sm);color:#0f0f1a;font-size:16px;font-weight:800;font-family:'Nunito',sans-serif;cursor:pointer}
+.save-btn:active{opacity:0.85}
+.save-btn:disabled{opacity:0.4;cursor:not-allowed}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="logo"><div class="logo-icon">💰</div>Budget Planner</div>
+    <span id="pastBadge" class="past-badge" style="display:none;">Pichla Mahina</span>
+  </div>
+  <div class="month-nav">
+    <button class="mnav-btn" id="prevBtn" onclick="changeMonth(-1)">‹</button>
+    <div class="month-label" id="monthLabel">Jun 2026</div>
+    <button class="mnav-btn" id="nextBtn" onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="tabs" style="margin:10px 0 0">
+    <button class="tab active" onclick="switchTab('kharche')">📤 Kharche</button>
+    <button class="tab" onclick="switchTab('amdani')">📥 Amdani</button>
+    <button class="tab" onclick="switchTab('summary')">📊 Summary</button>
+    <button class="tab" onclick="switchTab('allmths');renderAllMonths()">🗓️ Sab</button>
+  </div>
+</header>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title">➕ Naya Kharch</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-label">Kharch ka Naam</div>
+      <input class="field-input" id="mName" type="text" placeholder="Jaise: Khana, Petrol, Bill..." maxlength="30" oninput="checkSave()"/>
+      <div class="field-label">Raqam (Amount)</div>
+      <div class="amount-wrap">
+        <span class="amount-sym">₨</span>
+        <input id="mAmount" type="number" placeholder="0" min="0" inputmode="numeric" oninput="checkSave()"/>
+      </div>
+      <div class="field-label">Date aur Waqt</div>
+      <div class="date-info-box">
+        <div style="font-size:18px">📅</div>
+        <div>
+          <div class="date-info-text" id="mDateText">—</div>
+          <div class="date-info-sub" id="mTimeText">—</div>
+        </div>
+      </div>
+      <div class="field-label">Icon Chunein</div>
+      <div class="icon-grid" id="iconGrid"></div>
+      <button class="save-btn" id="saveBtn" onclick="saveExpense()" disabled>Shamil Karein</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- TAB: KHARCHE -->
+  <div class="tab-panel active" id="panel-kharche">
+    <div class="section" style="margin-top:4px;">
+      <div class="section-head">
+        <div class="section-title">📤 Kharche</div>
+        <div class="section-total" id="expTotal">₨0</div>
+      </div>
+      <button class="add-btn" onclick="openModal()">＋ Naya Kharch Shamil Karen</button>
+      <div id="expenseList"></div>
+    </div>
+  </div>
+
+  <!-- TAB: AMDANI -->
+  <div class="tab-panel" id="panel-amdani">
+    <div class="section" style="margin-top:4px;">
+      <div class="section-head">
+        <div class="section-title">📥 Amdani</div>
+        <div class="section-total" id="incomeTotal">₨0</div>
+      </div>
+      <div class="input-row">
+        <div class="input-icon green-bg">💼</div>
+        <div class="input-info">
+          <div class="input-name">Salary / Tankhwa</div>
+          <div class="rupee-input">
+            <span class="rupee-sym">₨</span>
+            <input type="number" id="salary" placeholder="0" oninput="saveAndRender()" min="0" inputmode="numeric">
+          </div>
+        </div>
+      </div>
+      <div class="input-row">
+        <div class="input-icon yellow-bg">✨</div>
+        <div class="input-info">
+          <div class="input-name">Dosri Amdani</div>
+          <div class="rupee-input">
+            <span class="rupee-sym">₨</span>
+            <input type="number" id="other" placeholder="0" oninput="saveAndRender()" min="0" inputmode="numeric">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tip"><span style="font-size:15px;flex-shrink:0">💡</span><span id="tipText">Apni monthly salary enter karein.</span></div>
+  </div>
+
+  <!-- TAB: SUMMARY -->
+  <div class="tab-panel" id="panel-summary">
+    <!-- Month End Summary -->
+    <div class="month-summary" style="margin-top:4px;" id="monthSummaryBox">
+      <div class="ms-head">📅 <span id="msMonthName">Jun 2026</span> — Maheene ka Khulasa</div>
+      <div class="ms-row"><span class="ms-label">💚 Total Amdani</span><span class="ms-val green" id="msTotalIncome">₨0</span></div>
+      <div class="ms-row"><span class="ms-label">🔴 Total Kharche</span><span class="ms-val red" id="msTotalExp">₨0</span></div>
+      <div class="ms-row total"><span class="ms-label">🐷 Bachat</span><span class="ms-val" id="msBachat">₨0</span></div>
+      <div class="ms-row"><span class="ms-label">📈 Bachat %</span><span class="ms-val" id="msBachatPct">0%</span></div>
+      <div class="ms-row"><span class="ms-label">🔢 Kharche ki Tadad</span><span class="ms-val" id="msCount">0</span></div>
+    </div>
+    <!-- Progress -->
+    <div class="card savings-card" id="savingsCard" style="margin-bottom:14px;">
+      <div class="card-label">🐷 Bachat (Savings)</div>
+      <div class="card-value green" id="sumSavings">₨0</div>
+      <div class="savings-pct" id="savingsPct">Amdani ka 0% bacha</div>
+      <div class="progress-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+    </div>
+    <!-- Cards -->
+    <div class="summary-row" style="margin-bottom:14px;">
+      <div class="card"><div class="card-label">💚 Amdani</div><div class="card-value green" id="sumIncome">₨0</div></div>
+      <div class="card"><div class="card-label">🔴 Kharche</div><div class="card-value red" id="sumExp">₨0</div></div>
+    </div>
+    <!-- Breakdown -->
+    <div class="section" id="breakdownSection" style="display:none;">
+      <div class="section-head"><div class="section-title">📊 Category Breakdown</div></div>
+      <div id="breakdownList"></div>
+    </div>
+  </div>
+
+  <!-- TAB: SAB MAHINE -->
+  <div class="tab-panel" id="panel-allmths">
+    <div style="margin-top:4px;" id="allMonthsList"></div>
+  </div>
+
+</div>
+
+<style>
+.am-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;cursor:pointer}
+.am-card.current-month{border-color:rgba(0,200,150,0.4)}
+.am-head{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border)}
+.am-month{font-size:14px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+.am-badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;background:rgba(0,200,150,0.15);color:var(--green);border:1px solid rgba(0,200,150,0.3)}
+.am-savings{font-size:14px;font-weight:800}
+.am-row{display:flex;justify-content:space-between;padding:9px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600}
+.am-row:last-child{border-bottom:none}
+.am-lbl{color:var(--text2)}
+.am-val{font-weight:700;color:var(--text)}
+.grand-card{background:linear-gradient(135deg,rgba(0,200,150,0.15),rgba(78,158,255,0.1));border:1px solid rgba(0,200,150,0.3);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.grand-title{font-size:13px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px}
+.grand-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;font-weight:700}
+.grand-row:last-child{margin-bottom:0;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);font-size:16px}
+.grand-lbl{color:var(--text2)}
+.grand-val{font-weight:800}
+.no-data{padding:32px 16px;text-align:center;color:var(--text2);font-size:13px;font-weight:600}
+</style>
+
+<script>
+const COLORS=['#4e9eff','#00c896','#ffd166','#ff5c5c','#a78bfa','#f77f00','#2ec4b6','#e84393'];
+const ICONS=['🏠','🍽️','🚗','💡','📚','👗','💊','📱','🎮','✈️','💰','🛒','☕','🛍️','💈','🏥'];
+const MONTHS_UR=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS=['Itwaar','Somwaar','Mangal','Budh','Jumerat','Juma','Hafta'];
+const now=new Date();
+const CY=now.getFullYear(),CM=now.getMonth();
+let vY=CY,vM=CM,expenses=[],selectedIcon=ICONS[0];
+
+// TABS
+function switchTab(name){
+  const names=['kharche','amdani','summary','allmths'];
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',names[i]===name);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+function renderAllMonths(){
+  const container=document.getElementById('allMonthsList');
+  container.innerHTML='';
+
+  // Scan all localStorage keys for bp_ prefix
+  const monthData=[];
+  for(let i=0;i<localStorage.length;i++){
+    const key=localStorage.key(i);
+    if(!key.startsWith('bp_'))continue;
+    const parts=key.split('_');
+    if(parts.length<3)continue;
+    const y=parseInt(parts[1]),m=parseInt(parts[2]);
+    const d=JSON.parse(localStorage.getItem(key));
+    const salary=parseFloat(d.salary)||0;
+    const other=parseFloat(d.other)||0;
+    const income=salary+other;
+    const exps=d.expenses||[];
+    const totalExp=exps.reduce((s,e)=>s+(e.amount||0),0);
+    const savings=income-totalExp;
+    if(income===0&&totalExp===0)continue; // skip empty months
+    monthData.push({y,m,income,totalExp,savings,count:exps.length});
+  }
+
+  if(monthData.length===0){
+    container.innerHTML='<div class="no-data">⚠️ Abhi koi month ka data save nahi hua.<br>Pehle kharche ya amdani enter karein.</div>';
+    return;
+  }
+
+  // Sort newest first
+  monthData.sort((a,b)=>(b.y*12+b.m)-(a.y*12+a.m));
+
+  // Grand totals
+  let grandIncome=0,grandExp=0,grandSavings=0;
+  monthData.forEach(d=>{grandIncome+=d.income;grandExp+=d.totalExp;grandSavings+=d.savings});
+
+  // Grand total card
+  const gc=document.createElement('div');
+  gc.className='grand-card';
+  gc.innerHTML=`
+    <div class="grand-title">🌟 ${monthData.length} Maheene ka Grand Total</div>
+    <div class="grand-row"><span class="grand-lbl">💚 Kul Amdani</span><span class="grand-val" style="color:var(--green)">${fmt(grandIncome)}</span></div>
+    <div class="grand-row"><span class="grand-lbl">🔴 Kul Kharche</span><span class="grand-val" style="color:var(--red)">${fmt(grandExp)}</span></div>
+    <div class="grand-row"><span class="grand-lbl">🐷 Kul Bachat</span><span class="grand-val" style="color:${grandSavings>=0?'var(--green)':'var(--red)'}">${fmt(grandSavings)}</span></div>
+  `;
+  container.appendChild(gc);
+
+  // Each month card
+  monthData.forEach(d=>{
+    const isCur=d.y===CY&&d.m===CM;
+    const pct=d.income>0?Math.round((d.savings/d.income)*100):0;
+    const card=document.createElement('div');
+    card.className='am-card'+(isCur?' current-month':'');
+    card.onclick=()=>{vY=d.y;vM=d.m;loadMonth(vY,d.m);updateHeader();renderExpenses();render();switchTab('kharche')};
+    card.innerHTML=`
+      <div class="am-head">
+        <div class="am-month">
+          ${MONTHS_UR[d.m]} ${d.y}
+          ${isCur?'<span class="am-badge">Current</span>':''}
+        </div>
+        <div class="am-savings" style="color:${d.savings>=0?'var(--green)':'var(--red)'}">${fmt(d.savings)}</div>
+      </div>
+      <div class="am-row"><span class="am-lbl">💚 Amdani</span><span class="am-val">${fmt(d.income)}</span></div>
+      <div class="am-row"><span class="am-lbl">🔴 Kharche</span><span class="am-val">${fmt(d.totalExp)}</span></div>
+      <div class="am-row"><span class="am-lbl">📈 Bachat %</span><span class="am-val" style="color:${pct>=20?'var(--green)':pct>0?'var(--yellow)':'var(--red)'}">${pct}%</span></div>
+      <div class="am-row"><span class="am-lbl">🔢 Entries</span><span class="am-val">${d.count} kharche</span></div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// MODAL
+function openModal(){
+  const n=new Date();
+  const day=DAYS[n.getDay()];
+  document.getElementById('mDateText').textContent=`${n.getDate()} ${MONTHS_UR[n.getMonth()]} ${n.getFullYear()} — ${day}`;
+  const h=n.getHours(),m=n.getMinutes(),ampm=h>=12?'PM':'AM',h12=h%12||12;
+  document.getElementById('mTimeText').textContent=`${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+  document.getElementById('mName').value='';
+  document.getElementById('mAmount').value='';
+  document.getElementById('saveBtn').disabled=true;
+  document.getElementById('overlay').dataset.ts=n.toISOString();
+  buildIconGrid();
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('mAmount').focus(),300);
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open')}
+function overlayClick(e){if(e.target===document.getElementById('overlay'))closeModal()}
+function buildIconGrid(){
+  const g=document.getElementById('iconGrid');g.innerHTML='';
+  ICONS.forEach(ic=>{
+    const b=document.createElement('div');b.className='icon-opt'+(ic===selectedIcon?' selected':'');
+    b.textContent=ic;b.onclick=()=>{selectedIcon=ic;buildIconGrid()};g.appendChild(b);
+  });
+}
+function checkSave(){
+  const name=document.getElementById('mName').value.trim();
+  const amt=parseFloat(document.getElementById('mAmount').value);
+  document.getElementById('saveBtn').disabled=!(name&&amt>0);
+}
+function saveExpense(){
+  const name=document.getElementById('mName').value.trim();
+  const amount=parseFloat(document.getElementById('mAmount').value)||0;
+  const ts=document.getElementById('overlay').dataset.ts;
+  if(!name||!amount)return;
+  expenses.unshift({name,amount,icon:selectedIcon,ts});
+  saveMonth();renderExpenses();render();closeModal();
+}
+
+// STORAGE
+function monthKey(y,m){return`bp_${y}_${m}`}
+function loadMonth(y,m){
+  const saved=localStorage.getItem(monthKey(y,m));
+  if(saved){
+    const d=JSON.parse(saved);
+    expenses=d.expenses||[];
+    document.getElementById('salary').value=d.salary||'';
+    document.getElementById('other').value=d.other||'';
+  } else {
+    if(y===CY&&m===CM){
+      const n=new Date().toISOString();
+      expenses=[
+        {name:'Kiraya / Rent',amount:25000,icon:'🏠',ts:n},
+        {name:'Khana Peena',amount:15000,icon:'🍽️',ts:n},
+        {name:'Transport',amount:8000,icon:'🚗',ts:n},
+        {name:'Utility Bills',amount:5000,icon:'💡',ts:n},
+        {name:'Taleem',amount:7000,icon:'📚',ts:n},
+      ];
+      document.getElementById('salary').value=100000;
+    } else {
+      expenses=[];
+      document.getElementById('salary').value='';
+    }
+    document.getElementById('other').value='';
+  }
+}
+function saveMonth(){
+  localStorage.setItem(monthKey(vY,vM),JSON.stringify({
+    salary:document.getElementById('salary').value,
+    other:document.getElementById('other').value,
+    expenses
+  }));
+}
+function updateHeader(){
+  const isCurrent=vY===CY&&vM===CM;
+  const isPast=(vY<CY)||(vY===CY&&vM<CM);
+  const cv=vM+vY*12;
+  document.getElementById('monthLabel').innerHTML=MONTHS_UR[vM]+' '+vY+(isCurrent?'<span class="current-dot"></span>':'');
+  document.getElementById('pastBadge').style.display=isPast?'inline-block':'none';
+  document.getElementById('prevBtn').classList.toggle('disabled',cv<=CM-24+CY*12);
+  document.getElementById('nextBtn').classList.remove('disabled');
+}
+function changeMonth(dir){
+  saveMonth();vM+=dir;
+  if(vM>11){vM=0;vY++}if(vM<0){vM=11;vY--}
+  loadMonth(vY,vM);updateHeader();renderExpenses();render();
+}
+
+// FORMAT
+function fmt(n){return'₨'+Math.round(n).toLocaleString('en-PK')}
+function fmtDate(ts){
+  if(!ts)return'';
+  const d=new Date(ts);
+  const h=d.getHours(),m=d.getMinutes(),ampm=h>=12?'PM':'AM',h12=h%12||12;
+  return`${d.getDate()} ${MONTHS_UR[d.getMonth()]} — ${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+// RENDER EXPENSES with running balance
+function renderExpenses(){
+  const list=document.getElementById('expenseList');
+  list.innerHTML='';
+  if(!expenses.length){
+    list.innerHTML='<div class="empty-msg">Koi kharch nahi — upar button dabayein</div>';
+    return;
+  }
+  const salary=parseFloat(document.getElementById('salary').value)||0;
+  const other=parseFloat(document.getElementById('other').value)||0;
+  const totalIncome=salary+other;
+
+  // Show newest first; running balance from oldest
+  const rev=[...expenses].reverse();
+  let running=totalIncome;
+  const balances=rev.map(e=>{running-=e.amount;return running});
+  balances.reverse();
+
+  expenses.forEach((e,i)=>{
+    const bal=balances[i];
+    const balColor=bal>=0?'var(--green)':'var(--red)';
+    const row=document.createElement('div');
+    row.className='exp-row';
+    row.innerHTML=`
+      <div class="exp-icon">${e.icon||'💸'}</div>
+      <div class="exp-info">
+        <div class="exp-name">${e.name}</div>
+        <div class="exp-meta">${fmtDate(e.ts)}</div>
+        ${totalIncome>0?`<div class="exp-bal" style="color:${balColor}">Baqi: ${fmt(bal)}</div>`:''}
+      </div>
+      <div class="exp-right">
+        <div>
+          <div class="exp-amount">${fmt(e.amount)}</div>
+        </div>
+        <button class="exp-del" onclick="removeExpense(${i})">✕</button>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function removeExpense(i){expenses.splice(i,1);saveMonth();renderExpenses();render()}
+function saveAndRender(){saveMonth();renderExpenses();render()}
+
+function render(){
+  const salary=parseFloat(document.getElementById('salary').value)||0;
+  const other=parseFloat(document.getElementById('other').value)||0;
+  const totalIncome=salary+other;
+  const totalExp=expenses.reduce((s,e)=>s+(e.amount||0),0);
+  const bachat=totalIncome-totalExp;
+  const pct=totalIncome>0?Math.round((bachat/totalIncome)*100):0;
+
+  // Summary tab
+  document.getElementById('sumIncome').textContent=fmt(totalIncome);
+  document.getElementById('sumExp').textContent=fmt(totalExp);
+  document.getElementById('sumSavings').textContent=fmt(bachat);
+  document.getElementById('incomeTotal').textContent=fmt(totalIncome);
+  document.getElementById('expTotal').textContent=fmt(totalExp);
+
+  // Month end summary box
+  const msLabel=MONTHS_UR[vM]+' '+vY;
+  document.getElementById('msMonthName').textContent=msLabel;
+  document.getElementById('msTotalIncome').textContent=fmt(totalIncome);
+  document.getElementById('msTotalExp').textContent=fmt(totalExp);
+  const msB=document.getElementById('msBachat');
+  msB.textContent=fmt(bachat);
+  msB.className='ms-val '+(bachat>=0?'green':'red');
+  document.getElementById('msBachatPct').textContent=pct+'%';
+  document.getElementById('msCount').textContent=expenses.length+' entries';
+
+  // savings card
+  const savEl=document.getElementById('sumSavings');
+  const card=document.getElementById('savingsCard');
+  const bar=document.getElementById('progressBar');
+  if(bachat>=0){
+    savEl.className='card-value green';card.className='card savings-card';
+    bar.className='progress-bar';bar.style.width=Math.min(pct,100)+'%';
+    document.getElementById('savingsPct').textContent=`Amdani ka ${pct}% bacha`;
+  } else {
+    savEl.className='card-value red';card.className='card savings-card deficit';
+    bar.className='progress-bar over';bar.style.width='100%';
+    document.getElementById('savingsPct').textContent=`Kharche ${fmt(Math.abs(bachat))} zyada!`;
+  }
+
+  const tip=document.getElementById('tipText');
+  if(totalIncome===0)tip.textContent='Apni monthly salary is tab mein enter karein.';
+  else if(pct>=20)tip.textContent=`Zabardast! ${pct}% bachat — bilkul sahi track par!`;
+  else if(pct>0)tip.textContent=`Sirf ${pct}% bachat ho rahi hai. Target 20% rakhen.`;
+  else if(bachat<0)tip.textContent=`Kharche amdani se ${fmt(Math.abs(bachat))} zyada hain!`;
+  else tip.textContent='Amdani barabar kharche — kuch bachat ki koshish karein!';
+
+  renderBreakdown(totalExp);
+}
+
+function renderBreakdown(totalExp){
+  const section=document.getElementById('breakdownSection');
+  const list=document.getElementById('breakdownList');
+  if(totalExp===0){section.style.display='none';return}
+  section.style.display='block';list.innerHTML='';
+  const grouped={};
+  expenses.forEach(e=>{const k=e.name||'Other';grouped[k]=(grouped[k]||0)+e.amount});
+  Object.entries(grouped).sort((a,b)=>b[1]-a[1]).forEach(([name,amt],i)=>{
+    const pct=Math.round((amt/totalExp)*100);
+    const color=COLORS[i%COLORS.length];
+    const row=document.createElement('div');row.className='breakdown-row';
+    row.innerHTML=`<div class="bk-dot" style="background:${color}"></div><div class="bk-label">${name}</div><div class="bk-bar-wrap"><div class="bk-bar-bg"><div class="bk-bar-fill" style="width:${pct}%;background:${color}"></div></div></div><div class="bk-val">${fmt(amt)}</div><div class="bk-pct">${pct}%</div>`;
+    list.appendChild(row);
+  });
+}
+
+// INIT
+loadMonth(vY,vM);updateHeader();renderExpenses();render();
+
+// SERVICE WORKER
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// PWA INSTALL BANNER
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  document.getElementById('installBanner').style.display='flex';
+});
+
+function installApp(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(()=>{
+    deferredPrompt=null;
+    document.getElementById('installBanner').style.display='none';
+  });
+}
+
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('installBanner').style.display='none';
+});
+</script>
+
+<!-- INSTALL BANNER -->
+<div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:999;background:#00c896;padding:14px 20px;align-items:center;justify-content:space-between;gap:12px;max-width:480px;margin:0 auto;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="width:38px;height:38px;background:rgba(0,0,0,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">💰</div>
+    <div>
+      <div style="font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:#0f0f1a;">Budget Planner Install Karein</div>
+      <div style="font-family:'Nunito',sans-serif;font-size:11px;font-weight:600;color:rgba(0,0,0,0.6);">Home screen par icon aa jayega</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="document.getElementById('installBanner').style.display='none'" style="background:rgba(0,0,0,0.15);border:none;border-radius:8px;color:#0f0f1a;font-size:12px;font-weight:700;padding:8px 12px;font-family:'Nunito',sans-serif;cursor:pointer;">Baad Mein</button>
+    <button onclick="installApp()" style="background:#0f0f1a;border:none;border-radius:8px;color:#00c896;font-size:12px;font-weight:800;padding:8px 14px;font-family:'Nunito',sans-serif;cursor:pointer;">Install ✓</button>
+  </div>
+</div>
+
+</body>
+</html>
